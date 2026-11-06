@@ -44,7 +44,8 @@ from verifiers.v1.trace import AgentInfo, Trace, TraceTask
 from verifiers.v1.types import Messages, Request, Response, SystemMessage, UserMessage
 from verifiers.v1.utils.artifacts import collect
 from verifiers.v1.utils.decorators import discover_decorated, invoke
-from verifiers.v1.utils.log_scope import clip, get_logger, seconds, short_id
+from verifiers.v1.utils.format import format_time
+from verifiers.v1.utils.log_scope import clip, get_logger, short_id
 
 logger = get_logger(__name__)
 
@@ -354,7 +355,7 @@ class Rollout:
                         },
                     )
                 logger.debug(
-                    "Set up task in %s", seconds(time.perf_counter() - started)
+                    "Set up task in %s", format_time(time.perf_counter() - started)
                 )
                 started = time.perf_counter()
                 async with (
@@ -367,7 +368,7 @@ class Rollout:
                 logger.debug(
                     "Set up %s harness in %s",
                     self.harness.config.name,
-                    seconds(time.perf_counter() - started),
+                    format_time(time.perf_counter() - started),
                 )
                 started = time.perf_counter()
                 # `base_url` is the interception server's reachable URL for this rollout.
@@ -418,7 +419,7 @@ class Rollout:
                 )
                 logger.debug(
                     "Started interception and tool servers in %s",
-                    seconds(time.perf_counter() - started),
+                    format_time(time.perf_counter() - started),
                 )
                 # Setup and service provisioning are complete. Apply the runtime's
                 # execution policy while preserving the framework routes the agent uses.
@@ -962,7 +963,7 @@ class Rollout:
                 trace.timing.scoring.end = time.time()
                 trace.notify()
                 logger.debug(
-                    "Scored rollout in %s", seconds(trace.timing.scoring.duration)
+                    "Scored rollout in %s", format_time(trace.timing.scoring.duration)
                 )
         except Exception as e:  # noqa: BLE001 - finalize boundary records every rollout failure
             self.fail(e)
@@ -1011,7 +1012,7 @@ class Rollout:
             teardown = time.perf_counter() - started
         timing = trace.timing
         phases = " ".join(
-            f"{name}={seconds(span.duration)}"
+            f"{name}={format_time(span.duration)}"
             for name, span in (
                 ("boot", timing.boot),
                 ("setup", timing.setup),
@@ -1021,7 +1022,7 @@ class Rollout:
             )
             if span.start
         )
-        elapsed = seconds(time.time() - timing.start)
+        elapsed = format_time(time.time() - timing.start)
         dropped = f" dropped={trace.dropped}" if trace.is_dropped else ""
         if trace.ok:
             logger.info(
@@ -1032,7 +1033,7 @@ class Rollout:
                 trace.stop_condition,
                 dropped,
                 phases,
-                seconds(teardown),
+                format_time(teardown),
             )
         else:
             error = trace.last_error
@@ -1042,7 +1043,7 @@ class Rollout:
                 trace.num_turns,
                 dropped,
                 phases,
-                seconds(teardown),
+                format_time(teardown),
                 error.type if error else "Error",
                 clip(error.message) if error else "",
             )
